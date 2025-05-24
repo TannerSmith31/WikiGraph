@@ -20,7 +20,7 @@ export default function Home() {
     setError(null);
 
     try {
-      const article = await fetchWikipediaArticle(url);
+      const article = await fetchWikipediaArticle(url); // get the title and link[]
       const data = processWikiData(article);
       setGraphData(data);
     } catch (err) {
@@ -32,7 +32,9 @@ export default function Home() {
 
   return (
     <main className={styles.container}>
-      <h1 className={styles.title}>WikiGraph</h1>
+      <h1 className={styles.title}>
+        WikiGraph
+      </h1>
       
       <form onSubmit={handleSubmit} className={styles.form}>
         <input
@@ -62,7 +64,7 @@ export default function Home() {
           <WikiGraph nodes={graphData.nodes} links={graphData.links} />
         ) : (
           <div className={styles.placeholder}>
-            Enter a Wikipedia URL to visualize its article graph
+            Enter a Wikipedia URL to visualize its related-article-graph
           </div>
         )}
       </div>
