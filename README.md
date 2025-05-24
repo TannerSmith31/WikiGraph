@@ -1,36 +1,113 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# WikiGraph
 
-## Getting Started
+WikiGraph is an interactive web application that visualizes the relationships between Wikipedia articles using a force-directed graph. The application allows users to input any Wikipedia article URL and generates a visual representation of that article's links.
 
-First, run the development server:
+## Features
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+- Interactive force-directed graph visualization
+- Real-time Wikipedia article data fetching
+- Draggable nodes for custom layout
+- Responsive design
+- Error handling for invalid URLs or missing articles
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Technical Overview
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Architecture
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+The application is built using:
+- Next.js (React framework)
+- TypeScript
+- D3.js for graph visualization
+- Wikipedia API for data fetching
 
-## Learn More
+### Key Components
 
-To learn more about Next.js, take a look at the following resources:
+#### 1. Main Page (`src/app/page.tsx`)
+- Handles user input for Wikipedia URLs
+- Manages application state (loading, error states)
+- Renders the main UI components
+- Processes Wikipedia data for visualization
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+#### 2. WikiGraph Component (`src/Components/WikiGraph.tsx`)
+- Implements the D3.js force-directed graph
+- Features:
+  - Interactive node dragging
+  - Automatic force simulation
+  - Dynamic node and link rendering
+  - Responsive layout
+- Uses TypeScript interfaces for type safety:
+  - `WikiNode`: Represents graph nodes with position data
+  - `WikiLink`: Represents connections between nodes
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+#### 3. Wikipedia Integration (`src/lib/wikipedia.ts`)
+- Handles Wikipedia API communication
+- Two main functions:
+  - `fetchWikipediaArticle`: Retrieves article data and its links
+  - `processWikiData`: Transforms Wikipedia data into graph format
 
-## Deploy on Vercel
+### Data Flow
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+1. User enters a Wikipedia URL
+2. Application fetches article data using Wikipedia API
+3. Data is processed into nodes and links
+4. D3.js renders the interactive graph
+5. Users can interact with the graph by dragging nodes
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+### Styling
+
+The application uses CSS modules for styling:
+- `page.module.css`: Main page layout and form styling
+- `graph.module.css`: Graph-specific styling
+
+## Development
+
+### Prerequisites
+- Node.js
+- npm or yarn
+
+### Setup
+1. Clone the repository
+2. Install dependencies:
+   ```bash
+   npm install
+   # or
+   yarn install
+   ```
+3. Run the development server:
+   ```bash
+   npm run dev
+   # or
+   yarn dev
+   ```
+
+### Customization
+
+#### Modifying the Graph
+- Adjust force simulation parameters in `WikiGraph.tsx`
+- Modify node and link styling in `graph.module.css`
+- Change the number of links fetched in `wikipedia.ts`
+
+#### Adding Features
+- New graph interactions can be added to `WikiGraph.tsx`
+- Additional Wikipedia data can be fetched by modifying the API call in `wikipedia.ts`
+- UI components can be enhanced in `page.tsx`
+
+## API Usage
+
+The application uses the Wikipedia API with the following parameters:
+- `action=query`: Basic query action
+- `prop=links`: Fetches article links
+- `pllimit=500`: Maximum number of links to fetch
+- `format=json`: JSON response format
+
+## Error Handling
+
+The application handles various error cases:
+- Invalid Wikipedia URLs
+- Missing articles
+- API request failures
+- Network issues
+
+## Contributing
+
+Feel free to submit issues and enhancement requests!

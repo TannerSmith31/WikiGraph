@@ -52,7 +52,7 @@ export async function fetchWikipediaArticle(url: string): Promise<WikiArticle> {
 
   return {
     title: page.title,
-    links
+    links: links
   };
 }
 

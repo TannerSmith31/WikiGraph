@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from 'react';
 import * as d3 from 'd3';
+import styles from '../styles/graph.module.css';
 
 /**
  * Interface representing a node in the graph
@@ -48,73 +49,62 @@ export default function WikiGraph({ nodes, links }: WikiGraphProps) {
   useEffect(() => {
     if (!svgRef.current) return;
 
-    // Clear any existing SVG content to prevent overlapping
+    // Clear previous graph
     d3.select(svgRef.current).selectAll("*").remove();
 
-    // Set dimensions for the visualization
-    const width = 800;
-    const height = 600;
+    // Setup dimensions
+    const width = svgRef.current.clientWidth;
+    const height = svgRef.current.clientHeight;
 
-    // Create the SVG container with specified dimensions
+    // Create SVG
     const svg = d3.select(svgRef.current)
       .attr('width', width)
       .attr('height', height);
 
-    // Create and configure the force simulation
-    // - link: Creates links between nodes with specified distance
-    // - charge: Adds repulsion between nodes
-    // - center: Centers the graph in the SVG
+    // Setup force simulation
     const simulation = d3.forceSimulation<WikiNode>(nodes)
-      .force('link', d3.forceLink<WikiNode, WikiLink>(links).id((d) => d.id).distance(100))
-      .force('charge', d3.forceManyBody().strength(-300))
+      .force('link', d3.forceLink<WikiNode, WikiLink>(links).id(d => d.id).distance(100))
+      .force('charge', d3.forceManyBody().strength(-200))
       .force('center', d3.forceCenter(width / 2, height / 2));
 
-    // Create the link elements (lines between nodes)
+    // Create links
     const link = svg.append('g')
       .selectAll('line')
       .data(links)
       .join('line')
-      .attr('stroke', '#999')
-      .attr('stroke-opacity', 0.6)
-      .attr('stroke-width', 1);
+      .attr('class', styles.link);
 
-    // Create the node elements (circles)
+    // Create nodes
     const node = svg.append('g')
       .selectAll('circle')
       .data(nodes)
       .join('circle')
-      .attr('r', 5)
-      .attr('fill', '#69b3a2')
+      .attr('class', styles.node)
       .call(drag(simulation) as any);
 
-    // Create the label elements (text)
+    // Create labels
     const label = svg.append('g')
       .selectAll('text')
       .data(nodes)
       .join('text')
-      .text((d: WikiNode) => d.title)
-      .attr('font-size', 10)
-      .attr('dx', 12)
-      .attr('dy', 4);
+      .attr('class', styles.label)
+      .text(d => d.title);
 
-    // Update positions on each simulation tick
+    // Update positions on each tick
     simulation.on('tick', () => {
-      // Update link positions
       link
-        .attr('x1', (d: WikiLink) => (d.source as WikiNode).x || 0)
-        .attr('y1', (d: WikiLink) => (d.source as WikiNode).y || 0)
-        .attr('x2', (d: WikiLink) => (d.target as WikiNode).x || 0)
-        .attr('y2', (d: WikiLink) => (d.target as WikiNode).y || 0);
+        .attr('x1', d => (d.source as WikiNode).x || 0)
+        .attr('y1', d => (d.source as WikiNode).y || 0)
+        .attr('x2', d => (d.target as WikiNode).x || 0)
+        .attr('y2', d => (d.target as WikiNode).y || 0);
 
-      // Update node positions
       node
-        .attr('cx', (d: WikiNode) => d.x || 0)
-        .attr('cy', (d: WikiNode) => d.y || 0);
+        .attr('cx', d => d.x || 0)
+        .attr('cy', d => d.y || 0);
 
-      // Update label positions
       label
-        .attr('x', (d: WikiNode) => d.x || 0)
-        .attr('y', (d: WikiNode) => d.y || 0);
+        .attr('x', d => d.x || 0)
+        .attr('y', d => d.y || 0);
     });
 
     /**
@@ -150,16 +140,5 @@ export default function WikiGraph({ nodes, links }: WikiGraphProps) {
     }
   }, [nodes, links]);
 
-  return (
-    <svg
-      ref={svgRef}
-      style={{
-        width: '100%',
-        height: '100%',
-        minHeight: '600px',
-        border: '1px solid #ccc',
-        borderRadius: '4px',
-      }}
-    />
-  );
+  return <svg ref={svgRef} className={styles.svg} />;
 } 
