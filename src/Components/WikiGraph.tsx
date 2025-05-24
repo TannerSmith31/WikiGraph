@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import * as d3 from 'd3';
 import styles from '../styles/graph.module.css';
 
@@ -43,8 +43,8 @@ interface WikiGraphProps {
  * - Automatic layout
  */
 export default function WikiGraph({ nodes, links }: WikiGraphProps) {
-  // Reference to the SVG element
   const svgRef = useRef<SVGSVGElement>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     if (!svgRef.current) return;
@@ -61,33 +61,54 @@ export default function WikiGraph({ nodes, links }: WikiGraphProps) {
       .attr('width', width)
       .attr('height', height);
 
+    // Add zoom behavior
+    const zoom = d3.zoom<SVGSVGElement, unknown>()
+      .scaleExtent([0.1, 4])
+      .on('zoom', (event) => {
+        g.attr('transform', event.transform);
+      });
+
+    svg.call(zoom);
+
+    // Create a group for all elements
+    const g = svg.append('g');
+
     // Setup force simulation
     const simulation = d3.forceSimulation<WikiNode>(nodes)
-      .force('link', d3.forceLink<WikiNode, WikiLink>(links).id(d => d.id).distance(100))
-      .force('charge', d3.forceManyBody().strength(-200))
-      .force('center', d3.forceCenter(width / 2, height / 2));
+      .force('link', d3.forceLink<WikiNode, WikiLink>(links).id(d => d.id).distance(300))
+      .force('charge', d3.forceManyBody().strength(-50))
+      .force('center', d3.forceCenter(width / 2, height / 2))
+      .force('collision', d3.forceCollide().radius(15).strength(0.5))
+      .alphaDecay(0.2)
+      .velocityDecay(0.5);
 
     // Create links
-    const link = svg.append('g')
+    const link = g.append('g')
       .selectAll('line')
       .data(links)
       .join('line')
       .attr('class', styles.link);
 
     // Create nodes
-    const node = svg.append('g')
+    const node = g.append('g')
       .selectAll('circle')
       .data(nodes)
       .join('circle')
       .attr('class', styles.node)
+      .attr('r', 8)
       .call(drag(simulation) as any);
 
     // Create labels
-    const label = svg.append('g')
+    const label = g.append('g')
       .selectAll('text')
       .data(nodes)
       .join('text')
       .attr('class', styles.label)
+      .text(d => d.title)
+      .attr('dy', -10);
+
+    // Add tooltips
+    node.append('title')
       .text(d => d.title);
 
     // Update positions on each tick
@@ -105,6 +126,11 @@ export default function WikiGraph({ nodes, links }: WikiGraphProps) {
       label
         .attr('x', d => d.x || 0)
         .attr('y', d => d.y || 0);
+    });
+
+    // Set loading to false when simulation is stable
+    simulation.on('end', () => {
+      setIsLoading(false);
     });
 
     /**
@@ -140,5 +166,10 @@ export default function WikiGraph({ nodes, links }: WikiGraphProps) {
     }
   }, [nodes, links]);
 
-  return <svg ref={svgRef} className={styles.svg} />;
+  return (
+    <div className={styles.graphContainer}>
+      {isLoading && <div className={styles.loading}>Loading graph...</div>}
+      <svg ref={svgRef} className={styles.svg} />
+    </div>
+  );
 } 

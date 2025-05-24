@@ -20,7 +20,7 @@ export default function Home() {
     setError(null);
 
     try {
-      const article = await fetchWikipediaArticle(url);
+      const article = await fetchWikipediaArticle(url); // get the title and link[]
       const data = processWikiData(article);
       setGraphData(data);
     } catch (err) {
@@ -64,7 +64,7 @@ export default function Home() {
           <WikiGraph nodes={graphData.nodes} links={graphData.links} />
         ) : (
           <div className={styles.placeholder}>
-            Enter a Wikipedia URL to visualize its article graph
+            Enter a Wikipedia URL to visualize its related-article-graph
           </div>
         )}
       </div>
