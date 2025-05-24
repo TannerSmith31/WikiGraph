@@ -32,7 +32,9 @@ export default function Home() {
 
   return (
     <main className={styles.container}>
-      <h1 className={styles.title}>WikiGraph</h1>
+      <h1 className={styles.title}>
+        WikiGraph
+      </h1>
       
       <form onSubmit={handleSubmit} className={styles.form}>
         <input
