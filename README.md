@@ -3,7 +3,12 @@
 WikiGraph is an interactive web application that visualizes the relationships between Wikipedia articles using a force-directed graph. The application allows users to input any Wikipedia article URL and generates a visual representation of that article's links.
 
 ## Helpful References
-All options for Wikepedia APIs: https://en.wikipedia.org/w/api.php?action=help&recursivesubmodules=1
+- For everything about Wikepedia APIs (all options):
+  - https://en.wikipedia.org/w/api.php?action=help&recursivesubmodules=1
+- For `action=query`:
+  - https://en.wikipedia.org/w/api.php?action=help&modules=query
+- For all actions:
+  - https://en.wikipedia.org/w/api.php
 
 ## Features
 
