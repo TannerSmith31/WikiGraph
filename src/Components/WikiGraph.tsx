@@ -45,21 +45,48 @@ interface WikiGraphProps {
 export default function WikiGraph({ nodes, links }: WikiGraphProps) {
   const svgRef = useRef<SVGSVGElement>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
+  const [linkDistance, setLinkDistance] = useState(300);
+  const [chargeStrength, setChargeStrength] = useState(-300);
+  const [collisionRadius, setCollisionRadius] = useState(1);
+  const [collisionStrength, setCollisionStrength] = useState(0.05);
+  const [velocityDecay, setVelocityDecay] = useState(0.5);
+  const simulationRef = useRef<d3.Simulation<WikiNode, undefined> | null>(null);
 
   useEffect(() => {
-    if (!svgRef.current) return;
+    const updateDimensions = () => {
+      if (svgRef.current) {
+        const rect = svgRef.current.getBoundingClientRect();
+        setDimensions({
+          width: rect.width,
+          height: rect.height
+        });
+      }
+    };
+
+    // Initial dimensions
+    updateDimensions();
+
+    // Update on resize
+    window.addEventListener('resize', updateDimensions);
+    window.addEventListener('scroll', updateDimensions);
+
+    return () => {
+      window.removeEventListener('resize', updateDimensions);
+      window.removeEventListener('scroll', updateDimensions);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!svgRef.current || dimensions.width === 0) return;
 
     // Clear previous graph
     d3.select(svgRef.current).selectAll("*").remove();
 
-    // Setup dimensions
-    const width = svgRef.current.clientWidth;
-    const height = svgRef.current.clientHeight;
-
     // Create SVG
     const svg = d3.select(svgRef.current)
-      .attr('width', width)
-      .attr('height', height);
+      .attr('width', dimensions.width)
+      .attr('height', dimensions.height);
 
     // Add zoom behavior
     const zoom = d3.zoom<SVGSVGElement, unknown>()
@@ -75,12 +102,16 @@ export default function WikiGraph({ nodes, links }: WikiGraphProps) {
 
     // Setup force simulation
     const simulation = d3.forceSimulation<WikiNode>(nodes)
-      .force('link', d3.forceLink<WikiNode, WikiLink>(links).id(d => d.id).distance(300))
-      .force('charge', d3.forceManyBody().strength(-50))
-      .force('center', d3.forceCenter(width / 2, height / 2))
-      .force('collision', d3.forceCollide().radius(15).strength(0.5))
+      .force('link', d3.forceLink<WikiNode, WikiLink>(links).id(d => d.id).distance(linkDistance))
+      .force('charge', d3.forceManyBody().strength(chargeStrength))
+      .force("x", d3.forceX())
+      .force("y", d3.forceY())
+      .force('center', d3.forceCenter(dimensions.width / 2, dimensions.height / 2))
+      .force('collision', d3.forceCollide().radius(collisionRadius).strength(collisionStrength))
       .alphaDecay(0.2)
-      .velocityDecay(0.5);
+      .velocityDecay(velocityDecay);
+
+    simulationRef.current = simulation;
 
     // Create links
     const link = g.append('g')
@@ -164,10 +195,115 @@ export default function WikiGraph({ nodes, links }: WikiGraphProps) {
         .on('drag', dragged)
         .on('end', dragended);
     }
-  }, [nodes, links]);
+  }, [nodes, links, dimensions, linkDistance, chargeStrength, collisionRadius, collisionStrength, velocityDecay]);
+
+  const updateSimulation = () => {
+    if (simulationRef.current) {
+      simulationRef.current
+        .force('link', d3.forceLink<WikiNode, WikiLink>(links).id(d => d.id).distance(linkDistance))
+        .force('charge', d3.forceManyBody().strength(chargeStrength))
+        .force('collision', d3.forceCollide().radius(collisionRadius).strength(collisionStrength))
+        .velocityDecay(velocityDecay)
+        .alpha(0.3)
+        .restart();
+    }
+  };
+
+  const handleDistanceChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setLinkDistance(parseInt(event.target.value));
+    updateSimulation();
+  };
+
+  const handleChargeChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setChargeStrength(parseInt(event.target.value));
+    updateSimulation();
+  };
+
+  const handleCollisionRadiusChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setCollisionRadius(parseInt(event.target.value));
+    updateSimulation();
+  };
+
+  const handleCollisionStrengthChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setCollisionStrength(parseFloat(event.target.value));
+    updateSimulation();
+  };
+
+  const handleVelocityDecayChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setVelocityDecay(parseFloat(event.target.value));
+    updateSimulation();
+  };
 
   return (
     <div className={styles.graphContainer}>
+      <div className={styles.controls}>
+        <div className={styles.controlGroup}>
+          <label htmlFor="distance">Link Distance: {linkDistance}px</label>
+          <input
+            id="distance"
+            type="range"
+            min="50"
+            max="500"
+            value={linkDistance}
+            onChange={handleDistanceChange}
+            className={styles.slider}
+          />
+        </div>
+
+        <div className={styles.controlGroup}>
+          <label htmlFor="charge">Charge Strength: {chargeStrength}</label>
+          <input
+            id="charge"
+            type="range"
+            min="-500"
+            max="-50"
+            value={chargeStrength}
+            onChange={handleChargeChange}
+            className={styles.slider}
+          />
+        </div>
+
+        <div className={styles.controlGroup}>
+          <label htmlFor="collisionRadius">Collision Radius: {collisionRadius}</label>
+          <input
+            id="collisionRadius"
+            type="range"
+            min="1"
+            max="30"
+            value={collisionRadius}
+            onChange={handleCollisionRadiusChange}
+            className={styles.slider}
+          />
+        </div>
+
+        <div className={styles.controlGroup}>
+          <label htmlFor="collisionStrength">Collision Strength: {collisionStrength.toFixed(2)}</label>
+          <input
+            id="collisionStrength"
+            type="range"
+            min="0.01"
+            max="1"
+            step="0.01"
+            value={collisionStrength}
+            onChange={handleCollisionStrengthChange}
+            className={styles.slider}
+          />
+        </div>
+
+        <div className={styles.controlGroup}>
+          <label htmlFor="velocityDecay">Velocity Decay: {velocityDecay.toFixed(2)}</label>
+          <input
+            id="velocityDecay"
+            type="range"
+            min="0.1"
+            max="0.9"
+            step="0.1"
+            value={velocityDecay}
+            onChange={handleVelocityDecayChange}
+            className={styles.slider}
+          />
+        </div>
+      </div>
       {isLoading && <div className={styles.loading}>Loading graph...</div>}
       <svg ref={svgRef} className={styles.svg} />
     </div>
